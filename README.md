@@ -1,266 +1,251 @@
-Financial Forecasting Automation (FP&A)
-Overview
+# Financial Forecasting Automation (FP&A)
 
-This project demonstrates a lightweight, production-style financial forecasting automation pipeline commonly used in FP&A and Finance Technology teams.
-It simulates how monthly actuals are ingested from a data source, transformed using SQL, forecasted using a baseline time-series method, and converted into automated variance reports for financial review.
+A lightweight, production-style financial forecasting automation pipeline built with **Python, SQL, SQLite, and Excel**.
 
-The goal of this project is to show how Python + SQL can replace manual Excel-based forecasting workflows, enabling scalable, repeatable, and auditable forecasting processes.
+This project demonstrates how monthly financial actuals can be automatically ingested, transformed, forecasted, and converted into variance reports, replacing manual Excel-based FP&A workflows with a scalable and repeatable process.
 
-Business Problem
+---
+
+## Overview
+
+The pipeline simulates a typical FP&A forecasting workflow used in corporate finance teams.
+
+It automatically:
+
+- Loads monthly actuals from a data source
+- Stores data in a relational database
+- Uses SQL for financial data preparation
+- Generates rolling forecasts
+- Calculates forecast vs. actual variances
+- Produces automated Excel management reports
+
+The project demonstrates how **Python + SQL** can automate recurring financial reporting while improving scalability, consistency, and auditability.
+
+---
+
+## Business Problem
 
 Finance teams regularly need to:
 
-Load monthly actuals from a data warehouse
+- Load monthly actuals from a data warehouse
+- Produce rolling forecasts
+- Compare forecast vs. actual results
+- Identify financial variances
+- Deliver recurring management reports
 
-Produce rolling forecasts
+Traditional spreadsheet workflows are:
 
-Compare forecast vs actual results
+- Time consuming
+- Error-prone
+- Difficult to audit
+- Hard to scale
 
-Identify variances for management review
+This project demonstrates a simplified but realistic automation pipeline commonly found in FP&A and Finance Technology organizations.
 
-Deliver structured Excel outputs on a recurring basis
+---
 
-Manual spreadsheet workflows are error-prone, slow, and difficult to scale.
-This project demonstrates a simplified but realistic automation approach that mirrors real FP&A pipelines used in large organizations.
+# Solution Architecture
 
-Solution Architecture
+```text
+CSV Source Data
+        │
+        ▼
+    SQLite Database
+        │
+        ▼
+      SQL Layer
+        │
+        ▼
+   Python Forecast Engine
+        │
+        ▼
+ Forecast + Variance Analysis
+        │
+        ▼
+ Excel Management Report
+```
 
-The pipeline is designed with clear separation between data, logic, and outputs:
+---
 
-CSV / Source Data
-        ↓
-     SQLite
-        ↓
-       SQL
-        ↓
-   Python Pipeline
-        ↓
- Forecast + Variance
-        ↓
-   Excel Report
+## Data Model
 
-Data Model
-Input Table: actuals
-Column	Type	Description
-month	DATE	Month of financial activity
-account	TEXT	Cost or revenue category (e.g., Payroll)
-amount	FLOAT	Actual amount for the period
+### Input Table: `actuals`
 
-The dataset represents monthly actuals, similar to data coming from ERP systems such as SAP, Oracle, or NetSuite.
+| Column | Type | Description |
+|---------|------|-------------|
+| month | DATE | Month of financial activity |
+| account | TEXT | Cost or revenue category |
+| amount | FLOAT | Actual financial amount |
 
-SQL Layer (Data Extraction)
+The dataset represents monthly actuals similar to data exported from ERP systems such as:
 
-The SQL layer simulates an enterprise finance data model and is responsible for:
+- SAP
+- Oracle
+- NetSuite
 
-- Monthly aggregation of actuals
-- Standardized time ordering
-- Lag-based YoY metrics
-- Rolling averages for trend analysis
-- Baseline forecast generation
+---
 
-CTEs are used to separate data preparation, aggregation, and analytic logic,
-mirroring patterns commonly used in production data warehouses.
+## SQL Layer
 
+The SQL layer simulates enterprise finance reporting logic.
 
-This step reflects real-world usage where FP&A analysts consume curated views or fact tables rather than raw transactions.
+Responsibilities include:
 
-Forecasting Methodology
-Baseline Model: Seasonal Naive Forecast
+- Monthly aggregation
+- Standardized date ordering
+- Lag calculations
+- Rolling averages
+- Baseline forecast preparation
 
-This project uses a Seasonal Naive model, a common FP&A baseline technique:
+Multiple CTEs separate:
 
-Forecast for a given month = actual value from the same month last year
+- Data preparation
+- Aggregation
+- Analytics
 
-Why this approach:
+This mirrors SQL patterns commonly used in enterprise finance data warehouses.
 
-Very common baseline in corporate planning
+---
 
-Easy to explain to finance stakeholders
+## Forecasting Methodology
 
-Strong benchmark for evaluating more advanced models
+### Baseline Model
 
-Requires minimal parameters and no external dependencies
+**Seasonal Naive Forecast**
 
-If insufficient historical data exists, the model falls back to using the most recent observed value.
+Forecast for each future month:
 
-Forecast Horizon
+```text
+Forecast = Actual from the same month last year
+```
 
-Default forecast horizon: 6 months
+### Why Seasonal Naive?
 
-Monthly frequency
+- Widely used FP&A baseline
+- Easy for finance stakeholders to understand
+- Strong benchmark before advanced forecasting models
+- Requires minimal configuration
 
-Automatically generated future periods based on last available actuals
+If insufficient historical data exists, the model automatically falls back to the most recent observed value.
 
-Variance Analysis Logic
+---
 
-Once forecasts are generated, the pipeline automatically calculates:
+## Forecast Horizon
 
-Variance
+- 6-month rolling forecast
+- Monthly frequency
+- Future periods generated automatically
 
-variance = actual − forecast
+---
 
+## Variance Analysis
 
-Variance %
+After forecasts are generated, the pipeline automatically calculates:
 
-variance_pct = variance / forecast
+### Variance
 
+```text
+Variance = Actual − Forecast
+```
 
-Variance values appear automatically once actuals for forecasted periods become available.
+### Variance %
 
-This mirrors real FP&A workflows where:
+```text
+Variance % = (Actual − Forecast) / Forecast
+```
 
-Forecasts are locked
+Variance values populate automatically once actuals become available.
 
-Actuals arrive monthly
+This reflects real FP&A workflows where:
 
-Variance analysis updates without manual recalculation
+- Forecasts are locked
+- Actuals arrive monthly
+- Variance analysis updates automatically
 
-Output Artifacts
-1. CSV Output
+---
 
-outputs/forecast_output.csv
+# Output
+
+## 1. Forecast CSV
+
+`outputs/forecast_output.csv`
 
 Contains:
 
-month
+- month
+- account
+- actual_amount
+- forecast_amount
+- variance
+- variance_pct
 
-account
+Typical use cases:
 
-actual_amount
+- Data validation
+- Downstream analytics
+- Additional modeling
 
-forecast_amount
+---
 
-variance
+## 2. Excel Variance Report
 
-variance_pct
+`outputs/variance_report.xlsx`
 
-Useful for:
+### Sheet: Forecast+Variance
 
-Further modeling
+Includes:
 
-Data validation
+- Historical actuals
+- Future forecasts
+- Variance calculations
 
-Downstream analytics
+### Sheet: Summary
 
-2. Excel Report
+Provides a management-friendly view:
 
-outputs/variance_report.xlsx
+- Last 3 historical months
+- Next 6 forecast months
+- Grouped by account
 
-Sheets included:
+This layout resembles recurring FP&A management review packages.
 
-Sheet: Forecast+Variance
+---
 
-Full time series including:
+# Features
 
-historical actuals
+- SQL-based financial data extraction
+- Automated monthly aggregation
+- Time-series forecasting
+- Rolling forecast generation
+- Forecast vs. actual variance analysis
+- Automated Excel reporting
+- Modular Python architecture
+- Clear separation between data, business logic, and outputs
 
-future forecasts
+---
 
-variance calculations
+# Technologies
 
-Sheet: Summary
+### Programming
 
-A compact view showing:
+- Python
+- pandas
+- NumPy
 
-last 3 historical months
+### Database
 
-next 6 forecast months
+- SQLite
+- SQL
 
-grouped by account
+### Reporting
 
-This mirrors how FP&A teams prepare review decks and management summaries.
+- Excel (openpyxl)
 
-Key Features Demonstrated
+---
 
-SQL-based data extraction layer
+# Project Structure
 
-Automated monthly aggregation
-
-Time-series forecasting logic
-
-Rolling forecast generation
-
-Variance calculation
-
-Excel report automation
-
-Modular and reusable Python structure
-
-Clear separation between data, logic, and outputs
-
-Getting Started
-
-Prerequisites
-
-Python 3.8 or higher
-
-Installation
-
-1. Install required dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-This will install:
-- pandas (>=2.0)
-- numpy (>=1.24)
-- openpyxl (>=3.1)
-
-Running the Pipeline
-
-Option 1: Run the complete pipeline (Recommended)
-
-```bash
-python run.py
-```
-
-This will execute both steps in sequence:
-1. Load data from CSV to SQLite database
-2. Generate forecasts and variance analysis reports
-
-Option 2: Run steps individually
-
-Step 1: Load data to SQLite
-
-```bash
-python scr/01_load_to_sqlite.py
-```
-
-Step 2: Generate forecast and variance reports
-
-```bash
-python scr/02_forecast_and_variance.py
-```
-
-Output Files
-
-After running the pipeline, the following files will be generated in the `outputs/` directory:
-
-- `forecast_output.csv` - Complete forecast data with variance calculations
-- `variance_report.xlsx` - Excel report with Forecast+Variance and Summary sheets
-
-Technologies Used
-
-Programming & Analytics
-
-Python
-
-pandas
-
-NumPy
-
-Data & Querying
-
-SQLite
-
-SQL
-
-Reporting
-
-Excel (via openpyxl)
-
-Project Structure
+```text
 fpa-forecast-automation/
 │
 ├── data/
@@ -272,7 +257,7 @@ fpa-forecast-automation/
 │   ├── monthly_actuals_enriched.sql
 │   └── forecast_baseline.sql
 │
-├── scr/
+├── src/
 │   ├── 01_load_to_sqlite.py
 │   └── 02_forecast_and_variance.py
 │
@@ -283,3 +268,90 @@ fpa-forecast-automation/
 ├── run.py
 ├── requirements.txt
 └── README.md
+```
+
+> **Note:** If your folder is currently named `scr`, consider renaming it to `src`, which is the conventional name for source code directories in Python projects.
+
+---
+
+# Getting Started
+
+## Prerequisites
+
+- Python 3.8+
+- pip
+
+---
+
+## Installation
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Required packages:
+
+- pandas >= 2.0
+- numpy >= 1.24
+- openpyxl >= 3.1
+
+---
+
+# Usage
+
+## Run the Complete Pipeline (Recommended)
+
+```bash
+python run.py
+```
+
+This will:
+
+1. Load CSV data into SQLite
+2. Generate forecasts
+3. Calculate variances
+4. Export CSV and Excel reports
+
+---
+
+## Run Individual Steps
+
+### Step 1 — Load Data
+
+```bash
+python src/01_load_to_sqlite.py
+```
+
+### Step 2 — Generate Forecasts
+
+```bash
+python src/02_forecast_and_variance.py
+```
+
+---
+
+# Generated Outputs
+
+After execution, the `outputs/` directory will contain:
+
+| File | Description |
+|------|-------------|
+| `forecast_output.csv` | Forecast data with variance calculations |
+| `variance_report.xlsx` | Excel report containing Forecast+Variance and Summary sheets |
+
+---
+
+# Future Improvements
+
+Potential enhancements include:
+
+- Prophet forecasting
+- ARIMA forecasting
+- Machine learning forecasting models
+- Power BI dashboard integration
+- Automated scheduling with Airflow
+- Database connectivity (SQL Server, Snowflake, PostgreSQL)
+- Scenario and sensitivity analysis
+- Email report automation
